@@ -17,6 +17,9 @@ class LoginSucceeded(Exception):
 class LoginFailed(Exception):
     pass
 
+class APIException(Exception):
+    pass
+
 
 class GarminConnect(object):
     LOGIN_URL = 'https://connect.garmin.com/signin'
