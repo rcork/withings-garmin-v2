@@ -4,7 +4,6 @@
 from withings2 import WithingsAccount
 from garmin import GarminConnect
 from fit import FitEncoder_Weight
-import trainerroad
 
 from optparse import OptionParser
 from optparse import Option
@@ -18,9 +17,6 @@ import sys
 
 GARMIN_USERNAME = ''
 GARMIN_PASSWORD = ''
-
-TRAINERROAD_USERNAME = ''
-TRAINERROAD_PASSWORD = ''
 
 class DateOption(Option):
     def check_date(self, option, opt, value):
@@ -45,10 +41,6 @@ def main():
                  default=GARMIN_USERNAME, type='string', metavar='<user>', help='username to login Garmin Connect.')
     p.add_option('--garmin-password', '--gp',
                  default=GARMIN_PASSWORD, type='string', metavar='<pass>', help='password to login Garmin Connect.')
-    p.add_option('--trainerroad-username', '--tu', 
-                 default=TRAINERROAD_USERNAME, type='string', metavar='<user>', help='username to login TrainerRoad.')	
-    p.add_option('--trainerroad-password', '--tp', 
-                 default=TRAINERROAD_PASSWORD, type='string', metavar='<user>', help='username to login TrainerRoad.')					 
     p.add_option('-f', '--fromdate', type='date', default=date.today(), metavar='<date>')
     p.add_option('-t', '--todate', type='date', default=date.today(), metavar='<date>')
     p.add_option('--no-upload', action='store_true', help="Won't upload to Garmin Connect and output binary-strings to stdout.")
@@ -58,8 +50,7 @@ def main():
     sync(**opts.__dict__)
 
 
-def sync(garmin_username, garmin_password, trainerroad_username, trainerroad_password, fromdate, todate, 
-         no_upload, verbose):
+def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose):
 
     def verbose_print(s):
         if verbose:
@@ -117,26 +108,7 @@ def sync(garmin_username, garmin_password, trainerroad_username, trainerroad_pas
     fit.finish()
 
 
-    # garmin connect
-    
-    if trainerroad_username and last_weight > 0:
-        print('Trainerroad username set -- attempting to sync')
-        print(" Last weight {}".format(last_weight))
-        print(" Measured {}".format(last_dt))
-        
-        tr = trainerroad.TrainerRoad(trainerroad_username, trainerroad_password)
-        tr.connect()
-        print ("Current TrainerRoad weight: {} kg ".format(tr.weight))
-        print ("Updating TrainerRoad weight to {} kg".format(last_weight))
-        tr.weight = round(last_weight, 1)
-        tr.disconnect()
-        print ("TrainerRoad update done!\n")
-        
-        
-    else:
-        print('No Trainerroad username or a new measurement - skipping sync')	
-        
-        
+    # garmin connect    
     if no_upload:
         sys.stdout.buffer.write(fit.getvalue())
         return		
