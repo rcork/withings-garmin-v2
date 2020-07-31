@@ -90,12 +90,12 @@ class GarminConnect(object):
             raise APIException("SSO error %s %s" % (ssoResp.status_code, ssoResp.text))
 
         if ">sendEvent('FAIL')" in ssoResp.text:
-            raise APIException("Invalid login", block=True, user_exception=UserException(UserExceptionType.Authorization, intervention_required=True))
+            raise APIException("Invalid login")
         if ">sendEvent('ACCOUNT_LOCKED')" in ssoResp.text:
-            raise APIException("Account Locked", block=True, user_exception=UserException(UserExceptionType.Locked, intervention_required=True))
+            raise APIException("Account Locked")
 
         if "renewPassword" in ssoResp.text:
-            raise APIException("Reset password", block=True, user_exception=UserException(UserExceptionType.RenewPassword, intervention_required=True))
+            raise APIException("Reset password")
 
         # self.print_cookies(cookies=session.cookies)
 
@@ -172,7 +172,7 @@ class GarminConnect(object):
                            headers={"nk": "NT"})
 
         try:
-            resp = res.json()["detailedImportResult"]
+            res.json()["detailedImportResult"]
         except (ValueError, KeyError):
             if(res.status_code == 204):   # HTTP result 204 - "no content"
                 sys.stderr.write('No data to upload, try to use --fromdate and --todate\n')

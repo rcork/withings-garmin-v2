@@ -37,17 +37,15 @@ class DateOption(Option):
 def main():
     usage = 'usage: sync.py [options]'
     p = OptionParser(usage=usage, option_class=DateOption)
-    p.add_option('--garmin-username', '--gu',
-                 default=GARMIN_USERNAME, type='string', metavar='<user>', help='username to login Garmin Connect.')
-    p.add_option('--garmin-password', '--gp',
-                 default=GARMIN_PASSWORD, type='string', metavar='<pass>', help='password to login Garmin Connect.')
+    p.add_option('--garmin-username', '--gu', default=GARMIN_USERNAME, type='string', metavar='<user>', help='username to login Garmin Connect.')
+    p.add_option('--garmin-password', '--gp', default=GARMIN_PASSWORD, type='string', metavar='<pass>', help='password to login Garmin Connect.')
     p.add_option('-f', '--fromdate', type='date', default=date.today(), metavar='<date>')
     p.add_option('-t', '--todate', type='date', default=date.today(), metavar='<date>')
     p.add_option('--no-upload', action='store_true', help="Won't upload to Garmin Connect and output binary-strings to stdout.")
     p.add_option('-v', '--verbose', action='store_true', help='Run verbosely')
-    opts, args = p.parse_args()
+    (opts, args) = p.parse_args()
 
-    sync(**opts.__dict__)
+    sync(opts.garmin_username, opts.garmin_password, opts.fromdate, opts.todate, opts.no_upload, opts.verbose)
 
 
 def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose):
@@ -78,9 +76,6 @@ def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose)
     fit = FitEncoder_Weight()
     fit.write_file_info()
     fit.write_file_creator()
-    
-    last_dt = None
-    last_weight = 0
 
     for group in groups:
         # get extra physical measurements
@@ -103,8 +98,6 @@ def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose)
                 bmi=(round(weight / pow(height,2),1)) if (height and weight) else None
             )
         verbose_print('Appending weight scale record...\n\ttimestamp = %s\n\tweight =  %skg\n\tfat ratio = %s%%\n\thydration = %s%%\n\tbone mass = %skg\n\tmuscle mass = %skg\n\tbmi = %s\n' % (dt, weight, fat_ratio,(hydration*100.0/weight) if (hydration and weight) else None,bone_mass,muscle_mass,(round(weight / pow(height,2),1)) if (height and weight) else None))
-        last_dt = dt
-        last_weight = weight
     fit.finish()
 
 
