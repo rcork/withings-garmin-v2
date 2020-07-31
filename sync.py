@@ -23,7 +23,7 @@ TRAINERROAD_USERNAME = ''
 TRAINERROAD_PASSWORD = ''
 
 class DateOption(Option):
-	def check_date(option, opt, value):
+	def check_date(self, option, opt, value):
 		valid_formats = ['%Y-%m-%d', '%Y%m%d', '%Y/%m/%d']
 		for f in valid_formats:
 			try:
@@ -74,7 +74,13 @@ def sync(garmin_username, garmin_password, trainerroad_username, trainerroad_pas
 	startdate = int(time.mktime(fromdate.timetuple()))
 	enddate = int(time.mktime(todate.timetuple())) + 86399
 
+	height = withings.getHeight()
+	
 	groups = withings.getMeasurements(startdate=startdate, enddate=enddate)
+	# only upload if there are measurement returned
+	if (len(groups) == 0):
+		print("Withings: No measurements to upload for date or period specified")
+		return
 
 	# create fit file
 	verbose_print('generating fit file...\n')
@@ -95,15 +101,17 @@ def sync(garmin_username, garmin_password, trainerroad_username, trainerroad_pas
 		hydration = group.get_hydration()
 		bone_mass = group.get_bone_mass()
 
-		fit.write_device_info(timestamp=dt)
-		fit.write_weight_scale(timestamp=dt,
-			weight=weight,
-			percent_fat=fat_ratio,
-			percent_hydration=(hydration*100.0/weight) if (hydration and weight) else None,
-			bone_mass=bone_mass,
-			muscle_mass=muscle_mass
+		if weight:
+			fit.write_device_info(timestamp=dt)
+			fit.write_weight_scale(timestamp=dt,
+				weight=weight,
+				percent_fat=fat_ratio,
+				percent_hydration=(hydration*100.0/weight) if (hydration and weight) else None,
+				bone_mass=bone_mass,
+				muscle_mass=muscle_mass,
+				bmi=(round(weight / pow(height,2),1)) if (height and weight) else None
 			)
-		verbose_print('appending weight scale record... %s %skg %s%%\n' % (dt, weight, fat_ratio))
+		verbose_print('Appending weight scale record...\n\ttimestamp = %s\n\tweight =  %skg\n\tfat ratio = %s%%\n\thydration = %s%%\n\tbone mass = %skg\n\tmuscle mass = %skg\n\tbmi = %s\n' % (dt, weight, fat_ratio,(hydration*100.0/weight) if (hydration and weight) else None,bone_mass,muscle_mass,(round(weight / pow(height,2),1)) if (height and weight) else None))
 		last_dt = dt
 		last_weight = weight
 	fit.finish()

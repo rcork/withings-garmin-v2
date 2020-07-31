@@ -10,7 +10,7 @@ from datetime import datetime
 import time
 
 class WithingsException(Exception):
-    pass
+	pass
 
 class Withings():
 	AUTHORIZE_URL = 'https://account.withings.com/oauth2_user/authorize2'
@@ -161,7 +161,6 @@ class WithingsAccount(Withings):
 
 		params = {
 			"access_token" : self.withings.user_config['access_token'],
-			# "meastype" : Withings.MEASTYPE_WEIGHT,
 			"category" : 1,
 			"startdate" : startdate,
 			"enddate" : enddate,
@@ -175,6 +174,40 @@ class WithingsAccount(Withings):
 			print("   Measurements received")
 
 			return [WithingsMeasureGroup(g) for g in measurements.get('body').get('measuregrps')]
+
+	def getHeight(self):
+		self.height = None
+		self.height_timestamp = None
+		self.height_group=None
+
+		print("Withings: Get Height")
+
+		params = {
+			"access_token" : self.withings.user_config['access_token'],
+			"meastype" : WithingsMeasure.TYPE_HEIGHT,
+			"category" : 1,
+		}
+
+		req = requests.post(Withings.GETMEAS_URL, params )
+
+		measurements = req.json()
+
+		if measurements.get('status') == 0:
+			print("   Height received")
+
+			# there could be multiple height records. use the latest one
+			for record in measurements.get('body').get('measuregrps'):
+				self.height_group = WithingsMeasureGroup(record)
+				if (self.height != None):
+					if (self.height_timestamp != None):
+						if (self.height_group.get_datetime() > self.height_timestamp):
+							self.height = self.height_group.get_height()
+				else:
+					self.height = self.height_group.get_height()
+					self.height_timestamp = self.height_group.get_datetime()
+		
+		return self.height
+
 
 class WithingsMeasureGroup(object):
     def __init__(self, measuregrp):
@@ -227,6 +260,13 @@ class WithingsMeasureGroup(object):
         """convinient function to get bone mass"""
         for measure in self.measures:
             if measure.type == WithingsMeasure.TYPE_BONE_MASS:
+                return measure.get_value()
+        return None
+
+    def get_height(self):
+        """convienent function to get height"""
+        for measure in self.measures:
+            if measure.type == WithingsMeasure.TYPE_HEIGHT:
                 return measure.get_value()
         return None
 
