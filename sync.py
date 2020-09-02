@@ -19,7 +19,7 @@ GARMIN_USERNAME = ''
 GARMIN_PASSWORD = ''
 
 class DateOption(Option):
-    def check_date(self, option, opt, value):
+    def check_date(self, option, value):
         valid_formats = ['%Y-%m-%d', '%Y%m%d', '%Y/%m/%d']
         for f in valid_formats:
             try:
@@ -28,7 +28,7 @@ class DateOption(Option):
             except ValueError:
                 pass
         raise OptionValueError('option %s: invalid date or format: %s. use following format: %s'
-                                 % (opt, value, ','.join(valid_formats)))
+                                 % (option, value, ','.join(valid_formats)))
     TYPES = Option.TYPES + ('date',)
     TYPE_CHECKER = Option.TYPE_CHECKER.copy()
     TYPE_CHECKER['date'] = check_date
