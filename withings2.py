@@ -276,6 +276,7 @@ class WithingsMeasure(object):
     TYPE_FAT_FREE_MASS = 5
     TYPE_FAT_RATIO = 6
     TYPE_FAT_MASS_WEIGHT = 8
+    TYPE_PULSE = 11
     TYPE_MUSCLE_MASS = 76
     TYPE_HYDRATION = 77
     TYPE_BONE_MASS = 88

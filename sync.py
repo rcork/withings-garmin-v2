@@ -97,7 +97,7 @@ def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose)
                 muscle_mass=muscle_mass,
                 bmi=(round(weight / pow(height,2),1)) if (height and weight) else None
             )
-        verbose_print('Appending weight scale record...\n\ttimestamp = %s\n\tweight =  %skg\n\tfat ratio = %s%%\n\thydration = %s%%\n\tbone mass = %skg\n\tmuscle mass = %skg\n\tbmi = %s\n' % (dt, weight, fat_ratio,(hydration*100.0/weight) if (hydration and weight) else None,bone_mass,muscle_mass,(round(weight / pow(height,2),1)) if (height and weight) else None))
+            verbose_print('Appending weight scale record...\n\ttimestamp = %s\n\tweight =  %skg\n\tfat ratio = %s%%\n\thydration = %s%%\n\tbone mass = %skg\n\tmuscle mass = %skg\n\tbmi = %s\n' % (dt, weight, fat_ratio,(hydration*100.0/weight) if (hydration and weight) else None,bone_mass,muscle_mass,(round(weight / pow(height,2),1)) if (height and weight) else None))
     fit.finish()
 
 
