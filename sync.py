@@ -9,7 +9,7 @@ from optparse import OptionParser
 from optparse import Option
 from optparse import OptionValueError
 from datetime import date
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import json
 import time
@@ -17,6 +17,7 @@ import sys
 
 GARMIN_USERNAME = ''
 GARMIN_PASSWORD = ''
+LASTRUN_FILE = 'lastrun.txt'
 
 class DateOption(Option):
     def check_date(self, option, value):
@@ -33,6 +34,19 @@ class DateOption(Option):
     TYPE_CHECKER = Option.TYPE_CHECKER.copy()
     TYPE_CHECKER['date'] = check_date
 
+def read_last_run():
+    lastrun = None
+    try:
+        with open(LASTRUN_FILE, "r") as file:
+            lastrun = file.read()
+        return lastrun
+    except (ValueError, FileNotFoundError):
+        print("Can't read config file " + LASTRUN_FILE)
+
+def write_last_run(lastrun):
+    with open(LASTRUN_FILE, "w") as file:
+        file.write(str(lastrun))
+
 
 def main():
     usage = 'usage: sync.py [options]'
@@ -45,8 +59,18 @@ def main():
     p.add_option('-v', '--verbose', action='store_true', help='Run verbosely')
     (opts, args) = p.parse_args()
 
-    sync(opts.garmin_username, opts.garmin_password, opts.fromdate, opts.todate, opts.no_upload, opts.verbose)
+    # determine which start date to use. Order of preference: 1) command line 2) last run date 3) current date
+    last_run = read_last_run()
+    # if fromdate is passed on command line, it should be different that current date
+    if (opts.fromdate != date.today()):
+        from_date = opts.fromdate
+    # use the last measurement timestap incremented by 1 minute to exclude the latest measurement
+    elif last_run:
+        from_date = datetime.fromisoformat(last_run) + timedelta(minutes=1)
+    else:
+        from_date = opts.fromdate
 
+    sync(opts.garmin_username, opts.garmin_password, from_date, opts.todate, opts.no_upload, opts.verbose)
 
 def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose):
 
@@ -77,6 +101,8 @@ def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose)
     fit.write_file_info()
     fit.write_file_creator()
 
+    last_measurement = None
+
     for group in groups:
         # get extra physical measurements
 
@@ -98,6 +124,12 @@ def sync(garmin_username, garmin_password, fromdate, todate, no_upload, verbose)
                 bmi=(round(weight / pow(height,2),1)) if (height and weight) else None
             )
             verbose_print('Appending weight scale record...\n\ttimestamp = %s\n\tweight =  %skg\n\tfat ratio = %s%%\n\thydration = %s%%\n\tbone mass = %skg\n\tmuscle mass = %skg\n\tbmi = %s\n' % (dt, weight, fat_ratio,(hydration*100.0/weight) if (hydration and weight) else None,bone_mass,muscle_mass,(round(weight / pow(height,2),1)) if (height and weight) else None))
+
+            # update last run file with the most recent measurement
+            if (last_measurement == None) or (dt > last_measurement):
+                last_measurement = dt
+                write_last_run(last_measurement)
+
     fit.finish()
 
 
